@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered Resume Screening</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #090a12;
+            --panel: #111321;
+            --panel-light: #171a2c;
+            --purple: #9b7cff;
+            --purple-bright: #b6a0ff;
+            --text: #f4f3ff;
+            --muted: #aaa9c2;
+            --border: rgba(177, 153, 255, .22);
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; min-height: 100vh; color: var(--text);
+            background:
+                radial-gradient(ellipse at 15% 15%, rgba(103, 68, 190, .19), transparent 38%),
+                radial-gradient(ellipse at 85% 80%, rgba(61, 47, 139, .18), transparent 40%),
+                var(--bg);
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+        }
+        .topbar {
+            height: 76px; display: flex; align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,.08);
+            background: rgba(9,10,18,.76); backdrop-filter: blur(14px);
+        }
+        .brand { display: flex; align-items: center; gap: 12px; font-weight: 700; letter-spacing: .2px; }
+        .brand-mark {
+            width: 38px; height: 38px; display: grid; place-items: center;
+            border-radius: 12px; color: #fff; font-weight: 800;
+            background: linear-gradient(135deg, #a58aff, #6948d7);
+            box-shadow: 0 7px 25px rgba(132, 91, 255, .3);
+        }
+        .brand small { display: block; color: var(--muted); font-weight: 500; font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase; }
+        .step-label { color: var(--muted); font-size: 13px; }
+        .page { display: none; min-height: calc(100vh - 76px); }
+        .page.active { display: flex; }
+        .intro-page { align-items: center; justify-content: center; padding: 50px 20px 80px; }
+        .intro-content { width: min(820px, 100%); text-align: center; }
+        .eyebrow {
+            display: inline-flex; align-items: center; gap: 9px; padding: 9px 14px;
+            border: 1px solid var(--border); border-radius: 100px;
+            color: var(--purple-bright); background: rgba(155,124,255,.08);
+            font-size: 12px; letter-spacing: 1.3px; text-transform: uppercase; font-weight: 700;
+        }
+        .eyebrow-dot { width: 7px; height: 7px; background: #a98cff; border-radius: 50%; box-shadow: 0 0 12px #a98cff; }
+        h1 { font-size: clamp(38px, 6vw, 66px); line-height: 1.08; font-weight: 800; letter-spacing: -2.5px; margin: 26px 0 20px; }
+        .gradient-text { background: linear-gradient(100deg, #fff 15%, #c7b8ff 58%, #9b7cff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .intro-copy { color: var(--muted); font-size: clamp(16px, 2vw, 19px); line-height: 1.8; max-width: 680px; margin: 0 auto; }
+        .feature-row { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin: 30px 0 36px; }
+        .feature-pill { color: #d8d4f2; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; background: rgba(255,255,255,.035); padding: 11px 15px; font-size: 13px; }
+        .primary-btn {
+            border: 0; border-radius: 13px; padding: 16px 27px; color: #fff;
+            font-weight: 800; letter-spacing: .6px;
+            background: linear-gradient(105deg, #9b7cff, #6949d8);
+            box-shadow: 0 10px 28px rgba(117, 82, 225, .24);
+            transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+        }
+        .primary-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 34px rgba(117,82,225,.34); color: white; }
+        .primary-btn:disabled { opacity: .6; cursor: wait; transform: none; }
+        .continue-btn { min-width: 220px; }
+        .page-content { width: min(1120px, 100%); margin: 0 auto; padding: 54px 22px 70px; }
+        .page-heading { text-align: center; margin-bottom: 36px; }
+        .page-heading h2 { font-size: clamp(29px, 4vw, 42px); font-weight: 800; letter-spacing: -1px; margin: 17px 0 10px; }
+        .page-heading p { color: var(--muted); margin: 0; }
+        .upload-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+        .upload-card {
+            border: 1px solid var(--border); border-radius: 20px; padding: 28px;
+            background: linear-gradient(155deg, rgba(25,27,47,.96), rgba(15,16,29,.96));
+            min-height: 310px; box-shadow: 0 20px 60px rgba(0,0,0,.15);
+        }
+        .upload-icon {
+            width: 52px; height: 52px; display: grid; place-items: center; border-radius: 15px;
+            background: rgba(155,124,255,.13); color: var(--purple-bright); margin-bottom: 23px;
+        }
+        .upload-icon svg { width: 25px; height: 25px; }
+        .upload-card h3 { font-size: 21px; font-weight: 750; margin-bottom: 9px; }
+        .upload-card p { color: var(--muted); font-size: 14px; line-height: 1.65; min-height: 45px; }
+        .file-input {
+            display: block; width: 100%; margin-top: 20px; padding: 14px;
+            color: #dcd8f7; border: 1px dashed rgba(177,153,255,.48);
+            border-radius: 12px; background: rgba(7,8,17,.6); font-size: 13px;
+        }
+        .file-input::file-selector-button {
+            border: 0; border-radius: 8px; padding: 9px 12px; margin-right: 12px;
+            background: #292143; color: #e9e1ff; font-weight: 700; cursor: pointer;
+        }
+        .file-name { color: var(--muted); font-size: 12px; margin-top: 12px; overflow-wrap: anywhere; }
+        .file-name.file-selected { color: #c8baff; }
+        .selected-files { margin-top: 24px; }
+        .selected-heading { color: #d7ceff; font-size: 13px; font-weight: 700; margin-bottom: 9px; }
+        .file-list { list-style: none; margin: 0; padding: 0; max-height: 180px; overflow: auto; }
+        .file-list li { display: flex; gap: 9px; align-items: center; color: #c8c6da; padding: 9px 11px; border-radius: 8px; background: rgba(255,255,255,.035); margin-top: 5px; font-size: 12px; overflow-wrap: anywhere; }
+        .file-dot { flex: 0 0 6px; width: 6px; height: 6px; border-radius: 50%; background: var(--purple); }
+        .actions { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 28px; }
+        .text-btn { border: 1px solid rgba(255,255,255,.15); border-radius: 12px; padding: 14px 19px; color: #d4d0e9; background: transparent; font-weight: 700; }
+        .text-btn:hover { background: rgba(255,255,255,.06); color: white; }
+        .proceed-btn { min-width: 300px; }
+        .requirements-note { color: var(--muted); text-align: center; font-size: 12px; margin-top: 18px; }
+        .loading-panel { text-align: center; margin: 25px 0; color: #d8d0ff; }
+        .loading-panel .spinner-border { color: var(--purple-bright); }
+        .error-message { margin-top: 20px; border: 1px solid rgba(255,112,139,.35); border-radius: 12px; background: rgba(153,31,62,.15); color: #ffb9c7; padding: 15px 18px; }
+        .results-top { display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-bottom: 25px; }
+        .results-top h2 { font-weight: 800; margin: 0; }
+        .candidate-card { background: var(--panel); border: 1px solid var(--border); border-radius: 17px; padding: 20px 22px; margin-bottom: 14px; overflow: hidden; }
+        .candidate-summary { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+        .candidate-identity { display: flex; align-items: center; gap: 15px; min-width: 0; }
+        .rank-chip { flex: 0 0 42px; width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; background: rgba(155,124,255,.13); border: 1px solid var(--border); color: var(--purple-bright); font-weight: 800; }
+        .candidate-name { margin: 0; font-size: 18px; font-weight: 750; overflow-wrap: anywhere; }
+        .candidate-score { color: var(--purple-bright); font-size: 26px; font-weight: 850; white-space: nowrap; }
+        .candidate-score-label { display: block; color: var(--muted); font-size: 11px; font-weight: 600; text-align: right; text-transform: uppercase; letter-spacing: .7px; }
+        .candidate-details { margin-top: 17px; border-top: 1px solid rgba(255,255,255,.09); padding-top: 14px; }
+        .candidate-details summary { cursor: pointer; color: #c7b8ff; font-weight: 700; font-size: 13px; list-style: none; display: flex; align-items: center; gap: 8px; }
+        .candidate-details summary::-webkit-details-marker { display: none; }
+        .candidate-details summary::before { content: '+'; display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 7px; background: rgba(155,124,255,.13); font-size: 16px; }
+        .candidate-details[open] summary::before { content: '−'; }
+        .candidate-details-content { padding-top: 18px; }
+        .results-count { color: var(--muted); font-size: 13px; margin: -18px 0 20px; }
+        .candidate-card h3 { font-size: 23px; color: var(--text); }
+        .candidate-card .text-muted { color: var(--muted) !important; }
+        .score { color: var(--purple-bright); font-size: 34px; font-weight: 800; }
+        .score-item { height: 100%; padding: 14px; background: rgba(155,124,255,.07); border: 1px solid rgba(155,124,255,.13); border-radius: 11px; }
+        .score-item strong { display: block; margin-top: 5px; font-size: 21px; color: #eee8ff; }
+        .matched { color: #7fe0b1; } .missing { color: #ffb0bd; }
+        .candidate-card .list-group-item { color: #e1deef; background: rgba(255,255,255,.035); border-color: rgba(255,255,255,.08); overflow-wrap: anywhere; }
+        .candidate-card small { color: var(--muted); }
+        .job-info-panel { border: 1px solid var(--border); border-radius: 12px; padding: 18px; background: rgba(155,124,255,.07); color: #e7e2fa; line-height: 1.8; overflow-wrap: anywhere; }
+        .job-info-panel h5 { font-weight: 750; }
+        .results-footer { display: flex; justify-content: center; margin-top: 30px; }
+        .d-none { display: none !important; }
+        @media (max-width: 760px) {
+            .upload-grid { grid-template-columns: 1fr; }
+            .upload-card { min-height: auto; padding: 23px; }
+            .actions { flex-direction: column-reverse; align-items: stretch; }
+            .actions button { width: 100%; }
+            .proceed-btn { min-width: 0; }
+            .results-top { align-items: flex-start; flex-direction: column; }
+            .candidate-card { padding: 16px; }
+            .candidate-summary { gap: 10px; }
+            .candidate-identity { gap: 10px; }
+            .candidate-name { font-size: 16px; }
+            .candidate-score { font-size: 23px; }
+            .rank-chip { width: 36px; height: 36px; flex-basis: 36px; }
+            .topbar { height: 68px; }
+            .page { min-height: calc(100vh - 68px); }
+            h1 { letter-spacing: -1.5px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="brand">
+                <div class="brand-mark">AI</div>
+                <div>Resume Screening<small>Candidate intelligence</small></div>
+            </div>
+            <div class="step-label" id="stepLabel">WELCOME</div>
+        </div>
+    </header>
+
+    <!-- PAGE 1: INTRODUCTION -->
+    <main>
+        <section id="page1" class="page intro-page active">
+            <div class="intro-content">
+                <div class="eyebrow"><span class="eyebrow-dot"></span> Intelligent hiring workflow</div>
+                <h1><span class="gradient-text">AI-Powered</span><br>Resume Screening</h1>
+                <p class="intro-copy">
+                    Evaluate candidate resumes against a job description with semantic matching,
+                    skill analysis, and weighted scoring. Get a ranked shortlist with a clear
+                    breakdown of each candidate’s strengths and missing requirements.
+                </p>
+                <div class="feature-row">
+                    <span class="feature-pill">Semantic similarity</span>
+                    <span class="feature-pill">Skill match analysis</span>
+                    <span class="feature-pill">Candidate ranking</span>
+                    <span class="feature-pill">Score explainability</span>
+                </div>
+                <button type="button" class="primary-btn continue-btn" onclick="continueToUploads()">
+                    CONTINUE <span aria-hidden="true">→</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- PAGE 2: UPLOAD -->
+        <section id="page2" class="page">
+            <div class="page-content">
+                <div class="page-heading">
+                    <div class="eyebrow"><span class="eyebrow-dot"></span> Step 01 / Upload</div>
+                    <h2>Prepare your screening</h2>
+                    <p>Add the job description and all resumes you want to evaluate.</p>
+                </div>
+
+                <div class="upload-grid">
+                    <article class="upload-card">
+                        <div class="upload-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <path d="M14 2v6h6M8 13h8M8 17h8"/>
+                            </svg>
+                        </div>
+                        <h3>Job Description</h3>
+                        <p>Upload the role details so the system can identify relevant skills, experience, and education requirements.</p>
+                        <label class="visually-hidden" for="jobDescription">Choose job description</label>
+                        <input type="file" class="file-input" id="jobDescription" accept=".pdf,.docx,.txt">
+                        <div id="jobFileName" class="file-name">No job description selected</div>
+                    </article>
+
+                    <article class="upload-card">
+                        <div class="upload-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M20 8v6M17 11h6"/>
+                            </svg>
+                        </div>
+                        <h3>Candidate Resumes</h3>
+                        <p>Select multiple resumes at once. The system will score and rank every uploaded candidate against the job description.</p>
+                        <label class="visually-hidden" for="resumes">Choose candidate resumes</label>
+                        <input type="file" class="file-input" id="resumes" accept=".pdf,.docx" multiple>
+                        <div class="file-name">PDF or DOCX files · Multiple selection supported</div>
+                        <div id="selectedFiles" class="selected-files"></div>
+                    </article>
+                </div>
+
+                <div id="errorMessage" class="error-message d-none" role="alert"></div>
+
+                <div id="loading" class="loading-panel d-none" aria-live="polite">
+                    <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
+                    <p class="mt-3 mb-0">Screening resumes and ranking candidates…</p>
+                </div>
+
+                <div class="actions">
+                    <button type="button" class="text-btn" onclick="showPage(1)">← Back</button>
+                    <button type="button" id="screenButton" class="primary-btn proceed-btn" onclick="screenCandidates(event)">
+                        PROCEED WITH SCREENING →
+                    </button>
+                </div>
+                <div class="requirements-note">Supported files: Job Description — PDF, DOCX, TXT · Resumes — PDF, DOCX</div>
+            </div>
+        </section>
+
+        <!-- PAGE 3: RESULTS -->
+        <section id="page3" class="page">
+            <div class="page-content">
+                <div class="page-heading">
+                    <div class="eyebrow"><span class="eyebrow-dot"></span> Step 02 / Results</div>
+                    <h2>Candidate rankings</h2>
+                    <p>View candidate names and scores, then expand any candidate to inspect the detailed evaluation.</p>
+                </div>
+
+                <div class="results-top">
+                    <div>
+                        <h2>Screening results</h2>
+                        <div class="step-label mt-2">Ranked from highest to lowest final score.</div>
+                    </div>
+                    <button type="button" class="text-btn" onclick="showPage(2)">← Back to uploads</button>
+                </div>
+
+                <div id="jobInfo" class="job-info-panel mb-4"></div>
+                <div id="candidateResults"></div>
+                <div class="results-footer">
+                    <button type="button" class="primary-btn" onclick="resetScreening()">START NEW SCREENING ↻</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+<script>
+
+const API_URL = "http://127.0.0.1:8000";
+
+const jobDescription = document.getElementById("jobDescription");
+const resumes = document.getElementById("resumes");
+const selectedFiles = document.getElementById("selectedFiles");
+const screenButton = document.getElementById("screenButton");
+const loading = document.getElementById("loading");
+const errorMessage = document.getElementById("errorMessage");
+const resultsSection = document.getElementById("page3");
+const jobInfo = document.getElementById("jobInfo");
+const candidateResults = document.getElementById("candidateResults");
+
+function showPage(pageNumber) {
+    document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
+    const target = document.getElementById(`page${pageNumber}`);
+    if (target) target.classList.add("active");
+    hideError();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function continueToUploads() {
+    showPage(2);
+}
+
+function goBackToUploads() {
+    showPage(2);
+}
+
+resumes.addEventListener("change", function () {
+    selectedFiles.innerHTML = "";
+    const files = Array.from(resumes.files);
+
+    if (files.length === 0) return;
+
+    let html = `<div class="selected-heading">${files.length} resume(s) selected</div><ul class="file-list">`;
+    files.forEach(file => {
+        html += `<li><span class="file-dot"></span>${escapeHtml(file.name)}</li>`;
+    });
+    html += `</ul>`;
+    selectedFiles.innerHTML = html;
+});
+
+jobDescription.addEventListener("change", function () {
+    const name = jobDescription.files[0]?.name;
+    const display = document.getElementById("jobFileName");
+    display.textContent = name || "No job description selected";
+    display.classList.toggle("file-selected", Boolean(name));
+});
+
+async function screenCandidates(event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    const jobFile = jobDescription.files[0];
+    const resumeFiles = Array.from(resumes.files);
+
+    if (!jobFile) {
+        showError("Please select a Job Description.");
+        return false;
+    }
+
+    if (resumeFiles.length === 0) {
+        showError("Please select at least one resume.");
+        return false;
+    }
+
+    hideError();
+    loading.classList.remove("d-none");
+    screenButton.disabled = true;
+    screenButton.textContent = "SCREENING IN PROGRESS…";
+
+    const formData = new FormData();
+    formData.append("job_description", jobFile);
+    resumeFiles.forEach(file => formData.append("resumes", file));
+
+    try {
+        const response = await fetch(`${API_URL}/screen`, {
+            method: "POST",
+            body: formData
+        });
+
+        const responseText = await response.text();
+        let data;
+
+        try {
+            data = JSON.parse(responseText);
+        } catch {
+            throw new Error("The server returned an invalid response. Check that the backend is running.");
+        }
+
+        if (!response.ok) {
+            throw new Error(data.detail || `API Error ${response.status}`);
+        }
+
+        displayResults(data);
+        showPage(3);
+    } catch (error) {
+        console.error("SCREENING ERROR:", error);
+        showError("Screening failed: " + error.message);
+    } finally {
+        loading.classList.add("d-none");
+        screenButton.disabled = false;
+        screenButton.textContent = "PROCEED WITH SCREENING";
+    }
+
+    return false;
+}
+
+// =========================================================
+// DISPLAY RESULTS
+// =========================================================
+
+function displayResults(data) {
+    if (!data) throw new Error("No response data received.");
+    if (!data.job_information) throw new Error("Job information is missing.");
+    if (!data.ranked_candidates) throw new Error("Candidate ranking is missing.");
+
+    // Keep Page 3 focused on the ranked list. Job details are not shown outside candidate dropdowns.
+    jobInfo.innerHTML = "";
+    candidateResults.innerHTML = "";
+
+    const candidates = data.ranked_candidates;
+
+    if (candidates.length === 0) {
+        candidateResults.innerHTML = `
+            <div class="job-info-panel">No candidates were returned. Please go back and upload at least one resume.</div>
+        `;
+        return;
+    }
+
+    const count = document.createElement("div");
+    count.className = "results-count";
+    count.textContent = `${candidates.length} candidate(s) ranked from highest to lowest score.`;
+    candidateResults.appendChild(count);
+
+    candidates.forEach(function(candidate) {
+        const card = document.createElement("article");
+        card.className = "candidate-card";
+
+        card.innerHTML = `
+            <div class="candidate-summary">
+                <div class="candidate-identity">
+                    <div class="rank-chip">#${escapeHtml(candidate.rank ?? "—")}</div>
+                    <div>
+                        <h3 class="candidate-name">${escapeHtml(candidate.name || "Unnamed candidate")}</h3>
+                        <div class="step-label">Candidate ranking</div>
+                    </div>
+                </div>
+                <div>
+                    <span class="candidate-score-label">Final score</span>
+                    <div class="candidate-score">${escapeHtml(candidate.final_score ?? "—")}%</div>
+                </div>
+            </div>
+
+            <details class="candidate-details">
+                <summary>View detailed information</summary>
+                <div class="candidate-details-content">
+                    <h5 class="mb-3">Score breakdown</h5>
+                    <div class="row g-3 mb-4">
+                        ${scoreBox("Skill Match", candidate.skill_score)}
+                        ${scoreBox("Semantic Similarity", candidate.semantic_score)}
+                        ${scoreBox("Experience", candidate.experience_score)}
+                        ${scoreBox("Education", candidate.education_score)}
+                    </div>
+                    <hr>
+                    <div class="row g-4 mt-1">
+                        <div class="col-md-6">
+                            <h5 class="matched">Matched Requirements</h5>
+                            ${matchedRequirements(candidate.matched_requirements)}
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="missing">Missing Requirements</h5>
+                            ${missingRequirements(candidate.missing_requirements)}
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+                    <div class="certifications-section">
+                        <h5>Certifications</h5>
+                        ${certificationsList(candidate.certifications)}
+                    </div>
+                </div>
+            </details>
+        `;
+        candidateResults.appendChild(card);
+    });
+}
+
+
+
+// =========================================================
+// CERTIFICATIONS
+// =========================================================
+
+function certificationsList(certifications) {
+    if (!Array.isArray(certifications) || certifications.length === 0) {
+        return `<p class="text-muted mb-0">None</p>`;
+    }
+
+    return `
+        <ul class="list-group">
+            ${certifications.map(line => `
+                <li class="list-group-item">${escapeHtml(line)}</li>
+            `).join("")}
+        </ul>
+    `;
+}
+
+// =========================================================
+// SCORE BOX
+// =========================================================
+
+function scoreBox(
+    title,
+    score
+) {
+
+    return `
+
+        <div
+            class="col-md-3"
+        >
+
+            <div
+                class="score-item"
+            >
+
+                <div
+                    class="text-muted"
+                >
+
+                    ${title}
+
+                </div>
+
+
+                <strong>
+
+                    ${score}%
+
+                </strong>
+
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+
+// =========================================================
+// MATCHED REQUIREMENTS
+// =========================================================
+
+function matchedRequirements(
+    requirements
+) {
+
+
+    if (
+        !requirements ||
+        requirements.length === 0
+    ) {
+
+        return `
+
+            <p
+                class="text-muted"
+            >
+
+                No matched requirements.
+
+            </p>
+
+        `;
+
+    }
+
+
+    return `
+
+        <ul
+            class="list-group"
+        >
+
+            ${
+                requirements
+                    .map(
+                        function(item) {
+
+                            return `
+
+                                <li
+                                    class="list-group-item"
+                                >
+
+                                    <strong>
+
+                                        ${escapeHtml(
+                                            item.requirement
+                                        )}
+
+                                    </strong>
+
+
+                                    <br>
+
+
+                                    <small>
+
+                                        Matched with:
+
+                                        ${escapeHtml(
+                                            item.matched_skill
+                                        )}
+
+
+                                        <br>
+
+
+                                        Similarity:
+
+                                        ${item.similarity}
+
+                                    </small>
+
+                                </li>
+
+                            `;
+
+                        }
+                    )
+                    .join("")
+            }
+
+        </ul>
+
+    `;
+
+}
+
+
+// =========================================================
+// MISSING REQUIREMENTS
+// =========================================================
+
+function missingRequirements(
+    requirements
+) {
+
+
+    if (
+        !requirements ||
+        requirements.length === 0
+    ) {
+
+        return `
+
+            <p
+                class="text-success"
+            >
+
+                No missing requirements.
+
+            </p>
+
+        `;
+
+    }
+
+
+    return `
+
+        <ul
+            class="list-group"
+        >
+
+            ${
+                requirements
+                    .map(
+                        function(item) {
+
+                            return `
+
+                                <li
+                                    class="list-group-item"
+                                >
+
+                                    <strong>
+
+                                        ${escapeHtml(
+                                            item.requirement
+                                        )}
+
+                                    </strong>
+
+                                </li>
+
+                            `;
+
+                        }
+                    )
+                    .join("")
+            }
+
+        </ul>
+
+    `;
+
+}
+
+
+// =========================================================
+// ERROR
+// =========================================================
+
+function showError(
+    message
+) {
+
+    errorMessage.textContent =
+        message;
+
+
+    errorMessage.classList.remove(
+        "d-none"
+    );
+
+
+    errorMessage.scrollIntoView({
+        behavior: "smooth"
+    });
+
+}
+
+
+// =========================================================
+// HIDE ERROR
+// =========================================================
+
+function hideError() {
+
+    errorMessage.classList.add(
+        "d-none"
+    );
+
+}
+
+
+// =========================================================
+// ESCAPE HTML
+// =========================================================
+
+function escapeHtml(
+    value
+) {
+
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+
+        return "";
+
+    }
+
+
+    return String(value)
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
+
+}
+
+
+
+function resetScreening() {
+    jobDescription.value = "";
+    resumes.value = "";
+    selectedFiles.innerHTML = "";
+    document.getElementById("jobFileName").textContent = "No job description selected";
+    document.getElementById("jobFileName").classList.remove("file-selected");
+    jobInfo.innerHTML = "";
+    candidateResults.innerHTML = "";
+    hideError();
+    showPage(1);
+}
+
+const originalShowPage = showPage;
+showPage = function(pageNumber) {
+    originalShowPage(pageNumber);
+    const labels = {1: "WELCOME", 2: "STEP 01 / UPLOAD", 3: "STEP 02 / RESULTS"};
+    document.getElementById("stepLabel").textContent = labels[pageNumber] || "";
+};
+
+</script>
+</body>
+</html>

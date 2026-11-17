@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+env/
+.venv/
+
+# Environment variables
+.env
+
+# IDE
+.vscode/
+
+# Uploaded candidate documents and generated data
+data/uploads/
+data/*.pdf
+data/*.docx
+
+# Temporary files
+*.log
+.DS_Store
