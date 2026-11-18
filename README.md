@@ -203,9 +203,12 @@ The application provides:
 - Advanced candidate analytics and reporting.
 - Enhanced evaluation using larger and domain-specific language models.
 
-## Author
+## Authors
 
 **Ajith Kumar Posa**
+**Savanth G**
+**Lokesh Gadhi**
+**Thejas T J**
 
 B.Tech – Computer Science and Engineering
 
