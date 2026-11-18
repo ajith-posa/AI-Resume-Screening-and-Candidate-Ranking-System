@@ -205,10 +205,10 @@ The application provides:
 
 ## Authors
 
-**Ajith Kumar Posa**
-**Savanth G**
-**Lokesh Gadhi**
-**Thejas T J**
+- **Ajith Kumar Posa**
+- **Savanth G**
+- **Lokesh Gadhi**
+- **Thejas T J**
 
 B.Tech – Computer Science and Engineering
 
